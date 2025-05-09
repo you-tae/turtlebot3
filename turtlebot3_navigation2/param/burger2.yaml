@@ -209,7 +209,7 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan virtual_obstacles
+        observation_sources: scan #virtual_obstacles
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -220,11 +220,11 @@ local_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
-        virtual_obstacles:                       ####################################
-          topic: /virtual_obstacles
-          data_type: "PointCloud2"
-          marking: True
-          clearing: True               
+        # virtual_obstacles:                       ####################################
+        #   topic: /virtual_obstacles
+        #   data_type: "PointCloud2"
+        #   marking: True
+        #   clearing: True               
       static_layer:
         map_subscribe_transient_local: True
       always_send_full_costmap: True
@@ -279,7 +279,7 @@ global_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan virtual_obstacles
+        observation_sources: scan #virtual_obstacles
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -290,15 +290,11 @@ global_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
           obstacle_min_range: 0.0
-        virtual_obstacles:                       ####################################
-          topic: /virtual_obstacles
-          data_type: "PointCloud2"
-          marking: True
-          clearing: True     
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0          
+        # virtual_obstacles:                       ####################################
+        #   topic: /virtual_obstacles
+        #   data_type: "PointCloud2"
+        #   marking: True
+        #   clearing: True               
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -335,7 +331,7 @@ planner_server:
     GridBased:
       plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.5
-      use_astar: false
+      use_astar: true
       allow_unknown: false
 
 planner_server_rclcpp_node:

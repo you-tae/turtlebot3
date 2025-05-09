@@ -36,16 +36,16 @@
 *.cfgc
 *.txt.user*
 *-build/
-cpp/
+# cpp/
 bin/
 build/
 msg_gen/
 srv_gen/
 docs/
 lib/
-cmake_install.cmake
+# cmake_install.cmake
 Makefile
-CMakeFiles/
+# CMakeFiles/
 assets/
 gen/
 build.xml

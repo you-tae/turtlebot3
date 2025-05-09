@@ -27,7 +27,6 @@ from launch_ros.actions import Node
 
 TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
 
-
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     use_rviz = LaunchConfiguration('use_rviz', default='true')
@@ -51,7 +50,7 @@ def generate_launch_description():
     rviz_config_dir = os.path.join(
         get_package_share_directory('nav2_bringup'),
         'rviz',
-        'nav2_default_view.rviz')
+        'nav2_default_view.rviz')  
 
     return LaunchDescription([
         DeclareLaunchArgument(
