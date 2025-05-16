@@ -30,7 +30,7 @@ class RelativeObstaclePublisher(Node):
         self.theta = math.radians(60)  # 로봇 앞에서 30도 우측
 
         # 박스 크기, 해상도
-        self.box_size = 0.5  # 0.5m 정사각형
+        self.box_size = 1.0  # 0.5m 정사각형
         self.resolution = 0.1
 
         self.timer = self.create_timer(0.5, self.publish_obstacle)
@@ -69,8 +69,8 @@ class RelativeObstaclePublisher(Node):
         header.frame_id = 'map'
         cloud = create_cloud_xyz32(header, pts)
         self.cloud_pub.publish(cloud)
-        self.r = self.r - 0.1
-        self.theta += 1
+        # self.r = self.r - 0.1
+        # self.theta += 1
 
         # 3) RViz Marker
         marker = Marker()

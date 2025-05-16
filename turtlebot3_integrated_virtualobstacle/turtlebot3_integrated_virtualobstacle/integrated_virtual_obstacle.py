@@ -1,80 +1,88 @@
-#!/usr/bin/env python3
-# ROS2 Python 노드: Nav2 코스트맵 반영용 PointCloud2와 RViz 시각화용 Marker를 통합 퍼블리시
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import PointCloud2
+from nav_msgs.msg import OccupancyGrid
 from std_msgs.msg import Header
-from sensor_msgs_py.point_cloud2 import create_cloud_xyz32
 from visualization_msgs.msg import Marker
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 import numpy as np
 
-
-class IntegratedObstaclePublisher(Node):
+class MapWithObsMarker(Node):
     def __init__(self):
-        super().__init__('integrated_obstacle_publisher')
-        # 퍼블리셔 생성
-        from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
-        qos = QoSProfile(depth=10,
-                         reliability=ReliabilityPolicy.RELIABLE,
-                         durability=DurabilityPolicy.VOLATILE)
-        self.cloud_pub_map = self.create_publisher(PointCloud2, 'virtual_obstacles', qos)
-        self.marker_pub = self.create_publisher(Marker, 'visualization_marker', qos)
-        self.timer = self.create_timer(0.2, self.publish_callback)
-        # 박스 범위 및 해상도 설정
-        self.x_min, self.x_max = 0.0, 1.0
-        self.y_min, self.y_max = -2.0, -1.0
-        self.resolution = 0.1
+        super().__init__('map_with_obs_marker')
+        # QoS: Latched처럼 동작하도록 DURABILITY=TRANSIENT_LOCAL 설정
+        qos = QoSProfile(
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL
+        )
 
-    def publish_callback(self):
-        # 1) PointCloud2 생성 (Nav2 costmap 반영용)
-        points = []
-        xs = np.arange(self.x_min, self.x_max, self.resolution)
-        ys = np.arange(self.y_min, self.y_max, self.resolution)
-        for x in xs:
-            for y in ys:
-                points.append([x, y, 0.0])
-        header_map = Header()
-        header_map.stamp = self.get_clock().now().to_msg()
-        header_map.frame_id = 'map'
-        cloud_map = create_cloud_xyz32(header_map, points)
-        self.cloud_pub_map.publish(cloud_map)
+        # 원본 맵 구독
+        self.sub = self.create_subscription(
+            OccupancyGrid, '/map', self.map_cb, 10)
+        # 수정된 맵 Latched 퍼블리시
+        self.pub_map = self.create_publisher(
+            OccupancyGrid, '/map_with_obs', qos)
+        # Marker 퍼블리시 (기본 QoS로 충분)
+        self.pub_marker = self.create_publisher(
+            Marker, '/visualization_marker', 10)
 
-        # 2) Marker 생성 (RViz 시각화용)
+        self.obs_min_x = 3.0
+        self.obs_max_x = 5.0
+        self.obs_min_y = -2.0
+        self.obs_max_y = 0.0
+
+    def map_cb(self, msg: OccupancyGrid):
+        w, h = msg.info.width, msg.info.height
+        data = np.array(msg.data, dtype=np.int8).reshape((h, w))
+
+        ox, oy = msg.info.origin.position.x, msg.info.origin.position.y
+        res = msg.info.resolution
+
+        ix0 = max(0, int((self.obs_min_x - ox) / res))
+        ix1 = min(w-1, int((self.obs_max_x - ox) / res))
+        iy0 = max(0, int((self.obs_min_y - oy) / res))
+        iy1 = min(h-1, int((self.obs_max_y - oy) / res))
+
+        data[iy0:iy1+1, ix0:ix1+1] = 100
+
+        new_map = OccupancyGrid()
+        new_map.header = msg.header
+        new_map.info = msg.info
+        new_map.data = list(data.flatten())
+        self.pub_map.publish(new_map)
+
         marker = Marker()
-        marker.header = header_map
-        marker.ns = 'virtual_box'  
+        marker.header = Header(
+            stamp=self.get_clock().now().to_msg(),
+            frame_id='map'
+        )
+        marker.ns = 'static_obs'
         marker.id = 0
         marker.type = Marker.CUBE
         marker.action = Marker.ADD
-        # 박스 중심 및 크기 설정
-        marker.pose.position.x = (self.x_min + self.x_max) / 2.0
-        marker.pose.position.y = (self.y_min + self.y_max) / 2.0
-        marker.pose.position.z = 1.0
+        marker.pose.position.x = (self.obs_min_x + self.obs_max_x) / 2.0
+        marker.pose.position.y = (self.obs_min_y + self.obs_max_y) / 2.0
+        marker.pose.position.z = 0.0
         marker.pose.orientation.w = 1.0
-        marker.scale.x = self.x_max - self.x_min
-        marker.scale.y = self.y_max - self.y_min
+        marker.scale.x = self.obs_max_x - self.obs_min_x
+        marker.scale.y = self.obs_max_y - self.obs_min_y
         marker.scale.z = 1.0
-        marker.color.r = 0.0
-        marker.color.g = 1.0
+        marker.color.r = 1.0
+        marker.color.g = 0.0
         marker.color.b = 0.0
         marker.color.a = 0.5
-        marker.lifetime.sec = 0
-        self.marker_pub.publish(marker)
-        # self.x_min -= 0.1
-        # self.x_max -= 0.1
-        self.get_logger().info(f'Published cloud ({len(points)} pts) and marker at box center')
+        self.pub_marker.publish(marker)
 
-def main(args=None):
-    rclpy.init(args=args)
-    node = IntegratedObstaclePublisher()
-    # rclpy.spin(node)
-    # rclpy.shutdown()
-    try:
-        rclpy.spin(node)
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        self.get_logger().info(
+            f'Published latched /map_with_obs and Marker at center'
+        )
+
+def main():
+    rclpy.init()
+    node = MapWithObsMarker()
+    rclpy.spin(node)
+    node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

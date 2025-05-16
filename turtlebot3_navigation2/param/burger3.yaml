@@ -188,20 +188,15 @@ local_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan virtual_obstacles 
+        observation_sources: scan_with_obstacle_map 
         publish_obstacles: true
         #observation_persistence: 0.1
-        scan:
-          topic: /scan
+        scan_with_obstacle_map:
+          topic: /scan_with_obstacle_map
           max_obstacle_height: 2.0
           clearing: True
           marking: True
-          data_type: "LaserScan"
-        virtual_obstacles:                       ####################################
-          topic: /virtual_obstacles
-          data_type: "PointCloud2"
-          marking: True
-          clearing: True        
+          data_type: "LaserScan"       
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -211,9 +206,9 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan virtual_obstacles
-        scan:
-          topic: /scan
+        observation_sources: scan_with_obstacle_map
+        scan_with_obstacle_map:
+          topic: /scan_with_obstacle_map
           max_obstacle_height: 2.0
           clearing: True
           marking: True
@@ -221,18 +216,8 @@ local_costmap:
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
-        virtual_obstacles:                       ####################################
-          topic: /virtual_obstacles
-          data_type: "PointCloud2"
-          marking: True
-          clearing: True      
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0    
+          obstacle_min_range: 0.0 
       static_layer:
-        #map_topic: "/map_with_obs"
         map_subscribe_transient_local: True
       always_send_full_costmap: True
   local_costmap_client:
@@ -257,24 +242,15 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan virtual_obstacles
+        observation_sources: scan_with_obstacle_map
         publish_obstacles: true
         #observation_persistence: 0.1
-        scan:
-          topic: /scan
+        scan_with_obstacle_map:
+          topic: /scan_with_obstacle_map
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
-        virtual_obstacles:                       ####################################
-          topic: /virtual_obstacles
-          data_type: "PointCloud2"
-          marking: True
-          clearing: True
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
@@ -288,29 +264,19 @@ global_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan virtual_obstacles
-        scan:
-          topic: /scan
+        observation_sources: scan_with_obstacle_map
+        scan_with_obstacle_map:
+          topic: /scan_with_obstacle_map
           max_obstacle_height: 2.0
-          clearing: true
+          clearing: True
           marking: True
           data_type: "LaserScan"
           raytrace_max_range: 3.0
           raytrace_min_range: 0.0
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
-        virtual_obstacles:                       ####################################
-          topic: /virtual_obstacles
-          data_type: "PointCloud2"
-          marking: True
-          clearing: True  
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0             
+          obstacle_min_range: 0.0    
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
-        #map_topic: "/map_with_obs"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
